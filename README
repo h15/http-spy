@@ -5,3 +5,43 @@ OVERVIEW
     HTTP::Spy is a HTTP proxy server with following abilities: observing and
     replacement packets on fly, audit and filtration.
 
+STRUCTURE
+                                    +---------+                   +----------+
+         +------+   +-----------+   | Log,    |   +-----------+   | External |
+         | User |<->| WebServer |<->| Modify, |<->| UserAgent |<->| HTTP     |
+         +------+   +-----------+   | Filter  |   +-----------+   | resource |
+                                    +---------+                   +----------+
+                                         ^
+                                         |
+                                         v
+                                   +-----------+
+                                   | WebServer |
+                                   +-----------+
+                                         ^
+                                         |
+                                         v
+                                 +---------------+
+                                 | Administrator |
+                                 | or hacker     |
+                                 | or webmaster  |
+                                 +---------------+
+
+COMMANDS
+    Following commands will helps you run and manage Spy server:
+
+  start
+      Use ./bin/start.pl to run spy-proxy server.
+      Params:
+        --conf - path to configure file (default ./conf/application.yaml);
+        --host - proxy host ip (default 127.0.0.1);
+        --port - proxy access port (default 3128);
+        --help - to see this message.
+      For example:
+        ./bin/start.pl --conf=/home/user/spy-conf.yaml --host=8.8.8.8 --port=8081
+
+COPYRIGHT AND LICENSE
+    Copyright (C) 2012, Georgy Bazhukov.
+
+    This program is free software, you can redistribute it and/or modify it
+    under the terms of the Artistic License version 2.0.
+
