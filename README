@@ -1,0 +1,7 @@
+Name
+    HTTP::Spy - Spy the web!
+
+OVERVIEW
+    HTTP::Spy is a HTTP proxy server with following abilities: observing and
+    replacement packets on fly, audit and filtration.
+
