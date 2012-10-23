@@ -98,7 +98,9 @@ use HTTP::Spy;
     my $server = new Twiggy::Server( host => $spy->getHost(),
                                      port => $spy->getPort() );
     
-    $server->register_service( sub{ $spy->input( Plack::Request->new(@_) ) } );
+    $server->register_service(
+      sub{ $spy->input( Plack::Request->new(@_)->{env} ) }
+    );
     
     # Run AnyEvent engine.
     AE::cv->recv;

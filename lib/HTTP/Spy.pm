@@ -4,9 +4,12 @@
 # | It's an application class.
 # Uses:
 #   Pony::Object
+#   HTTP::Spy::Request
 
 package HTTP::Spy;
 use Pony::Object -singleton;
+
+  use HTTP::Spy::Request;
 
   protected _host => '127.0.0.1'; # Default conf, host and port.
   protected _port => '3128';
@@ -41,7 +44,41 @@ use Pony::Object -singleton;
   sub input : Public
     {
       my $this = shift;
-      say dump \@_;
+      my $env = shift;
+      
+      # Get URI without scheme and host.
+      # For example:
+      # 'http://ya.ru/favicon.ico?a=1' -> 'favicon?a=1'
+      my @parts = split '/', $env->{REQUEST_URI};
+      my $path = join '/', @parts[3..$#parts];
+      
+      # Get extension from URI.
+      # For example:
+      # 'http://ya.ru/favicon.ico?a=1' -> 'ico'
+      my ( $ext ) = ( $path =~ /\.([\w\d]+)(?:\?|$)/ );
+      $ext ||= ''; # Empty string if no extension.
+      
+      my $params =
+      {
+        accept =>
+        {
+          encoding  => $env->{HTTP_ACCEPT_ENCODING},
+          http      => $env->{HTTP_ACCEPT},
+          charset   => $env->{HTTP_ACCEPT_CHARSET},
+          lang      => $env->{HTTP_ACCEPT_LANGUAGE},
+        },
+        method    => $env->{REQUEST_METHOD},
+        ua        => $env->{HTTP_USER_AGENT},
+        remote    => $env->{REMOTE_ADDR},
+        host      => $env->{HTTP_HOST},
+        proto     => uc $env->{'psgi.url_scheme'},
+        path      => $path,
+        extension => lc $ext,
+      };
+      
+      my $req = new HTTP::Spy::Request($params);
+      
+      say $req->dump();
     }
   
   
