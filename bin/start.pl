@@ -22,10 +22,6 @@ use File::Basename 'dirname';
 use File::Spec;
 use Term::ANSIColor;
 
-# Use Twiggy::Server as WebServer.
-use Twiggy::Server;
-use Plack::Request;
-
 # Get application's location.
 use constant APP_PATH =>
   join '/', File::Spec->splitdir(dirname(__FILE__)), '..';
@@ -33,6 +29,7 @@ use constant APP_PATH =>
 use lib APP_PATH . '/lib';
 
 use HTTP::Spy;
+use HTTP::Spy::WebServer;
 
   # Default params.
   # Will use if user does not redefine them.
@@ -94,16 +91,10 @@ use HTTP::Spy;
   #   Run here some httpd-engine
   #   and UserAgent-engine in threads.
   
-    # RUNNING Twiggy::Server...
-    my $server = new Twiggy::Server( host => $spy->getHost(),
-                                     port => $spy->getPort() );
-    
-    $server->register_service(
-      sub{ $spy->input( Plack::Request->new(@_)->{env} ) }
-    );
-    
-    # Run AnyEvent engine.
-    AE::cv->recv;
+    # RUNNING WebServer...
+    HTTP::Spy::WebServer
+      ->new( $spy->getHost(), $spy->getPort() )
+        ->loop( sub{ $spy->input(@_) } );
   };
   
   # Good looking error print.

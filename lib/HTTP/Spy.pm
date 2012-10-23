@@ -51,8 +51,7 @@ use Pony::Object -singleton;
       # Get URI without scheme and host.
       # For example:
       # 'http://ya.ru/favicon.ico?a=1' -> 'favicon?a=1'
-      my @parts = split '/', $env->{REQUEST_URI};
-      my $path = join '/', @parts[3..$#parts];
+      my $path = $env->uri->path;
       
       # Get extension from URI.
       # For example:
@@ -62,33 +61,26 @@ use Pony::Object -singleton;
       
       my $params =
       {
-        accept =>
-        {
-          encoding  => $env->{HTTP_ACCEPT_ENCODING},
-          http      => $env->{HTTP_ACCEPT},
-          charset   => $env->{HTTP_ACCEPT_CHARSET},
-          lang      => $env->{HTTP_ACCEPT_LANGUAGE},
-        },
-        method    => $env->{REQUEST_METHOD},
-        ua        => $env->{HTTP_USER_AGENT},
-        remote    => $env->{REMOTE_ADDR},
-        host      => $env->{HTTP_HOST},
-        proto     => uc $env->{'psgi.url_scheme'},
+        headers   => $env->headers,
+        method    => $env->method,
+        ua        => $env->headers->{'user-agent'},
+        host      => $env->headers->{'host'},
+        proto     => $env->protocol,
         path      => $path,
         extension => lc $ext,
-        uri       => $env->{REQUEST_URI},
+        uri       => $env->uri->as_string(),
       };
       
-      my $req = new HTTP::Spy::Request($params);
-      my $ua = new HTTP::Spy::UserAgent;
+      my $req  = new HTTP::Spy::Request($params);
+      my $ua   = new HTTP::Spy::UserAgent;
+      my $resp = $ua->send($req);
       
       $this->log($req);
       
-      return [
-              200,
-              [],
-              [ $ua->send($req) ]
-             ];
+      return $resp->as_string();
+          #$resp->status_line .
+          #$resp->headers->as_string() .
+          #$resp->content;
     }
   
   # Function: output
@@ -132,8 +124,8 @@ use Pony::Object -singleton;
       my $this = shift;
       my $req  = shift;
       
-      printf "[%s] %s->%s via %s\n",
-        scalar localtime, $req->remote, $req->host, $req->method;
+      printf "[%s] %s via %s\n",
+        scalar localtime, $req->host, $req->method;
     }
   
 1;

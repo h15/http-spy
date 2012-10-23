@@ -8,13 +8,13 @@ package HTTP::Spy::Request;
 use Pony::Object;
   
   # Accept type, encoding, lang, etc...
-  public accept => {};
+  public headers => {};
   # HTTP method. For example "POST", "GET".
   public method => '';
   # UserAgent.
   public ua => '';
   # Remote (User) address.
-  public remote => '';
+  #public remote => '';
   # Host for request.
   public host => '';
   # Protocol.

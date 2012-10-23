@@ -62,7 +62,7 @@ use Pony::Object;
       #$req->content("text=$text&login=$login&passwd=$passwd");
       my $resp = $ua->request($r);
       
-      return $resp->content;
+      return $resp;
     }
 
 1;
