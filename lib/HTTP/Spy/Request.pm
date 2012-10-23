@@ -1,3 +1,9 @@
+
+# Class: HTTP::Spy::Request
+#   User HTTP Request.
+# Uses:
+#   Pony::Object
+
 package HTTP::Spy::Request;
 use Pony::Object;
   
@@ -17,6 +23,8 @@ use Pony::Object;
   public path => '';
   # Requested file extension.
   public extension => '';
+  # Requested URI.
+  public uri => '';
   
   
   # Function: init

@@ -5,11 +5,13 @@
 # Uses:
 #   Pony::Object
 #   HTTP::Spy::Request
+#   HTTP::Spy::UserAgent
 
 package HTTP::Spy;
 use Pony::Object -singleton;
 
   use HTTP::Spy::Request;
+  use HTTP::Spy::UserAgent;
 
   protected _host => '127.0.0.1'; # Default conf, host and port.
   protected _port => '3128';
@@ -74,13 +76,20 @@ use Pony::Object -singleton;
         proto     => uc $env->{'psgi.url_scheme'},
         path      => $path,
         extension => lc $ext,
+        uri       => $env->{REQUEST_URI},
       };
       
       my $req = new HTTP::Spy::Request($params);
+      my $ua = new HTTP::Spy::UserAgent;
       
-      say $req->dump();
+      $this->log($req);
+      
+      return [
+              200,
+              [],
+              [ $ua->send($req) ]
+             ];
     }
-  
   
   # Function: output
   #   Runs on each http request (as UserAgent).
@@ -110,6 +119,21 @@ use Pony::Object -singleton;
     {
       my $this = shift;
       return $this->_port;
+    }
+  
+  
+  # Function: log
+  #   Log requests.
+  # Parameters:
+  #   req - HTTP::Spy::Request
+  
+  sub log : Public
+    {
+      my $this = shift;
+      my $req  = shift;
+      
+      printf "[%s] %s->%s via %s\n",
+        scalar localtime, $req->remote, $req->host, $req->method;
     }
   
 1;
