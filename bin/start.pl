@@ -22,6 +22,10 @@ use File::Basename 'dirname';
 use File::Spec;
 use Term::ANSIColor;
 
+# Use Twiggy::Server as WebServer.
+use Twiggy::Server;
+use Plack::Request;
+
 # Get application's location.
 use constant APP_PATH =>
   join '/', File::Spec->splitdir(dirname(__FILE__)), '..';
@@ -89,9 +93,18 @@ use HTTP::Spy;
   # TODO:
   #   Run here some httpd-engine
   #   and UserAgent-engine in threads.
+  
+    # RUNNING Twiggy::Server...
+    my $server = new Twiggy::Server( host => $spy->getHost(),
+                                     port => $spy->getPort() );
+    
+    $server->register_service( sub{ $spy->input( Plack::Request->new(@_) ) } );
+    
+    # Run AnyEvent engine.
+    AE::cv->recv;
   };
   
-  # Good looking error print
+  # Good looking error print.
   if ( $@ )
   {
     print color 'bold red';
@@ -108,5 +121,16 @@ use HTTP::Spy;
     print color 'reset';
     print " Server stopped.\n";
     
-    exit(1); # Some error happend.
+    exit(0); # Some error did not happend.
   }
+
+__END__
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2012, Georgy Bazhukov.
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=cut
