@@ -90,11 +90,14 @@ use HTTP::Spy::WebServer;
   # TODO:
   #   Run here some httpd-engine
   #   and UserAgent-engine in threads.
-  
-    # RUNNING WebServer...
-    HTTP::Spy::WebServer
-      ->new( $spy->getHost(), $spy->getPort() )
-        ->loop( sub{ $spy->input(@_) } );
+    
+    while (1)
+    {
+      # RUNNING WebServer...
+      HTTP::Spy::WebServer
+        ->new( $spy->getHost(), $spy->getPort() )
+          ->loop( sub{ $spy->input(@_) } );
+    }
   };
   
   # Good looking error print.

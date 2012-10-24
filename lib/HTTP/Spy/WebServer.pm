@@ -10,6 +10,7 @@ use Pony::Object;
   
   use HTTP::Daemon;
   use HTTP::Status;
+  use threads;
   
   protected _driver => undef;
   
@@ -41,24 +42,25 @@ use Pony::Object;
       my $this = shift;
       my $action = shift;
       
-      while ( 1 )
+      while ( my $c = $this->_driver->accept )
       {
-        eval
-        {
-          while ( my $c = $this->_driver->accept )
-          {
-            while ( my $r = $c->get_request )
-            {
-              $c->send_response( $action->($r) );
-            }
-            
-            $c->close;
-            #undef($c);
-          }
-          
-          sleep 1;
-        }
+        threads->create(\&service, $c, $action)->detach;
+        $c->close;  # close client socket in server
       }
+    }
+  
+  sub service
+    {
+      my $c = shift;
+      my $action = shift;
+      $c->daemon->close;
+      
+      while ( my $r = $c->get_request )
+      {
+        $c->send_response( $action->($r) );
+      }
+      
+      $c->close;
     }
   
 1;
