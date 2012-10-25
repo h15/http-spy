@@ -38,6 +38,7 @@ use HTTP::Spy::WebServer;
     conf => APP_PATH . '/conf/application.yaml',
     host => '127.0.0.1',
     port => 3128,
+    root => APP_PATH,
   };
   
   # Parse input params.
@@ -87,10 +88,6 @@ use HTTP::Spy::WebServer;
   
   eval
   {
-  # TODO:
-  #   Run here some httpd-engine
-  #   and UserAgent-engine in threads.
-    
     while (1)
     {
       # RUNNING WebServer...

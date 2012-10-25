@@ -8,8 +8,7 @@
 package HTTP::Spy::WebServer;
 use Pony::Object;
   
-  use HTTP::Daemon;
-  use HTTP::Status;
+  use HTTP::Spy::WebServer::HTTPDaemon;
   use threads;
   
   protected _driver => undef;
@@ -27,7 +26,7 @@ use Pony::Object;
       my $host = shift;
       my $port = shift;
       
-      $this->_driver = HTTP::Daemon->new(LocalAddr => $host, LocalPort => $port)
+      $this->_driver = HTTP::Spy::WebServer::HTTPDaemon->new->init(LocalAddr => $host, LocalPort => $port)
         or die "Cannot initialize proxy server: $!";
     }
   
@@ -57,10 +56,22 @@ use Pony::Object;
       
       while ( my $r = $c->get_request )
       {
-        $c->send_response( $action->($r) );
+        my $resp = $action->($r);
+        
+        if ( ref $resp eq 'HASH' )
+        {
+          $c->send_file_response( $resp->{path} );
+        }
+        elsif ( ref $resp eq 'ARRAY' )
+        {
+          $c->send_response( $resp->[0] );
+          print $c $resp->[1];
+        }
+        else
+        {
+          $c->send_response( $resp );
+        }
       }
-      
-      $c->close;
     }
   
 1;

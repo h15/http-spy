@@ -9,14 +9,17 @@
 
 package HTTP::Spy;
 use Pony::Object -singleton;
-
+  
+  use HTTP::Spy::Admin;
   use HTTP::Spy::Request;
   use HTTP::Spy::UserAgent;
+  
+  use Log::Log4perl;
 
   protected _host => '127.0.0.1'; # Default conf, host and port.
   protected _port => '3128';
   protected _conf => undef;
-  
+  protected _root => '';
   
   # Function: init
   #   Init object.
@@ -26,15 +29,18 @@ use Pony::Object -singleton;
   sub init : Public
     {
       my $this = shift;
+      my $params = shift;
       
       # Get params if exists.
-      if ( @_ )
+      while ( my($k, $v) = each %$params )
       {
-        my $params = shift;
-        $this->_host = $params->{host};
-        $this->_port = $params->{port};
-        $this->_conf = $params->{conf};
+        $this->{"_$k"} = $v;
       }
+      
+      Log::Log4perl->init($this->getRoot() . "/conf/log.conf");
+      my $logger = Log::Log4perl->get_logger('HTTP::Spy');
+      
+      $logger->fatal("HTTP::Spy started!");
     }
   
   
@@ -69,18 +75,39 @@ use Pony::Object -singleton;
         path      => $path,
         extension => lc $ext,
         uri       => $env->uri->as_string(),
+        content   => $env->content,
       };
       
       my $req  = new HTTP::Spy::Request($params);
-      my $ua   = new HTTP::Spy::UserAgent;
-      my $resp = $ua->send($req);
+      
+      #############################
+      #
+      #   ADMIN INTERFACE
+      #
+      return $this->admin($req) if $env->headers->{'host'} eq '127.0.0.1';
+      ##############################
       
       $this->log($req);
       
+      my $ua   = new HTTP::Spy::UserAgent;
+      my $resp = $ua->send($req);
+      
       return $resp->as_string();
-          #$resp->status_line .
-          #$resp->headers->as_string() .
-          #$resp->content;
+    }
+  
+  
+  # Function: admin
+  #   Goto admin interface.
+  # Parameters:
+  #   req - HTTP request
+  
+  sub admin : Public
+    {
+      my $this = shift;
+      my $req  = shift;
+      my $adm  = new HTTP::Spy::Admin;
+      #say $adm->show($req);
+      return $adm->show($req);
     }
   
   # Function: output
@@ -103,6 +130,17 @@ use Pony::Object -singleton;
     }
   
   
+  # Function: getRoot
+  #   Root getter.
+  # Return: string - root directory
+  
+  sub getRoot : Public
+    {
+      my $this = shift;
+      return $this->_root;
+    }
+  
+  
   # Function: getPort
   #   Port getter.
   # Return: port - port property
@@ -122,10 +160,22 @@ use Pony::Object -singleton;
   sub log : Public
     {
       my $this = shift;
-      my $req  = shift;
+      my $message = shift;
+      my $logger = Log::Log4perl->get_logger('HTTP::Spy');
       
-      printf "[%s] %s via %s\n",
-        scalar localtime, $req->host, $req->method;
+      if ( $message->isa('HTTP::Spy::Request') )
+      {
+        my $req = $message;
+        my $message = sprintf "[%s] %s via %s (%s)",
+                        scalar localtime, $req->host, $req->method, $req->uri;
+        $logger->info($message);
+        push @HTTP::Spy::Admin::LOG, $message;
+      }
+      else
+      {
+        $logger->info($message);
+        push @HTTP::Spy::Admin::LOG, $message;
+      }
     }
   
 1;

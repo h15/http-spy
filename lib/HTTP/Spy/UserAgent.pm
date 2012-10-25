@@ -59,8 +59,17 @@ use Pony::Object;
       
       my $ua = new LWP::UserAgent;
       my $r = HTTP::Request->new( $req->method, $req->uri );
-      #$req->content("text=$text&login=$login&passwd=$passwd");
-      my $resp = $ua->request($r);
+      
+      # Set headers.
+      while ( my($k, $v) = each %{ $req->headers } )
+      {
+        $r->header($k => $v);
+      }
+      
+      # Set request's body.
+      $r->content($req->content);
+      
+      my $resp = $ua->request($r) or die $!;
       
       return $resp;
     }

@@ -25,6 +25,8 @@ use Pony::Object;
   public extension => '';
   # Requested URI.
   public uri => '';
+  # Request's body.
+  public content => '';
   
   
   # Function: init
