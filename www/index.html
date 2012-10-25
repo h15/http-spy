@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>HTTP::Spy Admin panel</title>
+        <script type="text/javascript" src="/jquery.min.js"></script>
+        <meta charset="UTF-8">
+        <script>
+          $(document).ready(function(){
+            tick();
+            
+            $('.tabLabel').click(function(){
+              var id = $(this).attr('id');
+              // Switch current panel.
+              $('.tabPanel').hide();
+              $('#' + id + 'Panel').show();
+              // Switch current tabLable.
+              $('.tabLabel').removeClass('active');
+              $(this).addClass('active');
+            });
+          });
+          
+          function tick()
+          {
+            $.getJSON( "/log", {},
+              function(data)
+              {
+                // LOG
+                $.each(data.log, function(i, item){
+                  $('#logPanel').prepend('<div class="item">' + item + '</div>');
+                });
+              }
+            );
+            
+            setTimeout(tick, 1000);
+          }
+        </script>
+        <style>
+          body, html { font-family: Helvetica, Arial, sans-serif; color: #222222; background: rgb(248, 248, 241); margin: 0px; padding: 0px; }
+          .menu { font-size: 16px; background: rgb(198, 198, 181); padding: 4px 8px; height: 24px; }
+          #logPanel { height: 800px; width: 100%; overflow: auto; }
+          #logPanel .item { font-family:  monospace; background: #eeeeee; font-size: 10px; }
+          .right { float: right; }
+          a { color: #2266cc; text-decoration: none; }
+          .tabPanel { display: none; }
+          .tabLabel { background: rgb(218, 218, 201); float: left; padding: 4px; margin: 0px 10px; height: 20px; }
+          .active { display: block; background: rgb(242, 242, 232); }
+        </style>
+    </head>
+    <body>
+        <div class="menu">
+          <div class="right">HTTP::Spy Admin panel</div>
+          <a href="javascript: void(0)" id="settings" class="tabLabel active">Settings</a>
+          <a href="javascript: void(0)" id="log" class="tabLabel">Log</a>
+        </div>
+        <div id="main">
+          <div id="settingsPanel" class="tabPanel active"></div>
+          <div id="logPanel" class="tabPanel"></div>
+        </div>
+    </body>
+</html>
