@@ -253,7 +253,7 @@ use Pony::Object;
         return 0 if $InspectConfig{'direction-toServer'} == 0;
         return 0 if $InspectConfig{'host'} ne '' && $InspectConfig{'host'} ne $packet->host;
         
-        for my $e ( split '%7C', $InspectConfig{'extensions-except'} )
+        for my $e ( split /(?:%7C|\|)/, $InspectConfig{'extensions-except'} )
         {
           return 0 if $ext eq $e;
         }
@@ -269,7 +269,7 @@ use Pony::Object;
         return 0 if $InspectConfig{'direction-fromServer'} == 0;
         return 0 if $InspectConfig{'host'} ne '' && $InspectConfig{'host'} ne $req->host;
         
-        for my $e ( split '%7C', $InspectConfig{'extensions-except'} )
+        for my $e ( split /(?:%7C|\|)/, $InspectConfig{'extensions-except'} )
         {
           return 0 if $ext eq $e;
         }

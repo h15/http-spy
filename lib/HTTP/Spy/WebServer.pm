@@ -44,7 +44,7 @@ use Pony::Object;
       
       while ( my $c = $this->_driver->accept )
       {
-        threads->create(\&service, $c, $action)->detach;
+        threads->create(\&service, $c, $action)->detach();
         $c->close;  # close client socket in server
       }
     }

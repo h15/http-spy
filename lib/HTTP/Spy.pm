@@ -12,18 +12,24 @@
 package HTTP::Spy;
 use Pony::Object -singleton;
   
+  use HTTP::Spy::Admin::Tk;
   use HTTP::Spy::Admin;
   use HTTP::Spy::Request;
   use HTTP::Spy::UserAgent;
   use HTTP::Spy::Packet;
-  
   use Log::Log4perl;
+  
+  # Constant: GUI
+  # | What user interface will be use for admin panel.
+  # | Can be empty, 'tk' or 'web'.
+  use constant GUI => 'tk';
 
   protected _host => '127.0.0.1'; # Default conf, host and port.
   protected _port => '3128';
   protected _conf => undef;
   protected _root => '';
   protected _adm  => undef;
+  protected _admTk=> undef;
   
   
   # Function: init
@@ -44,6 +50,7 @@ use Pony::Object -singleton;
       
       # Init admin object.
       $this->_adm = new HTTP::Spy::Admin;
+      $this->_admTk = new HTTP::Spy::Admin::Tk
       
       my $rootPath = $this->getRoot();
       
@@ -105,14 +112,18 @@ use Pony::Object -singleton;
       #
       #   ADMIN INTERFACE
       #
-      return $this->_adm->show($req) if $env->headers->{'host'} eq 'http.spy';
+      if ( GUI eq 'web' )
+      {
+        return $this->_adm->show($req) if $env->headers->{'host'} eq 'http.spy';
+      }
       ##############################
       
       $this->log($req);
       
       # Inspection & substitution (request).
       # Can delays thread.
-      $req = $this->_adm->inspect($req);
+      $req = $this->_adm->inspect($req)   if GUI eq 'web';
+      $req = $this->_admTk->inspect($req) if GUI eq 'tk';
       
       # Do request.
       my $ua   = new HTTP::Spy::UserAgent;
@@ -120,7 +131,8 @@ use Pony::Object -singleton;
       
       # Inspection & substitution (response).
       # Can delays thread.
-      $resp = $this->_adm->inspect($resp);
+      $resp = $this->_adm->inspect($resp)   if GUI eq 'web';
+      $resp = $this->_admTk->inspect($resp) if GUI eq 'tk';
       
       return $resp;
     }
