@@ -1,0 +1,1 @@
+package HTTP::Spy::Admin::Tk;use Pony::Object;use Tk;  sub init : Public    {    }    sub send : Public    {    }    sub inspect : Public    {    }1;

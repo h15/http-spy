@@ -4,8 +4,10 @@
 # | It's an application class.
 # Uses:
 #   Pony::Object
+#   HTTP::Spy::Admin
 #   HTTP::Spy::Request
 #   HTTP::Spy::UserAgent
+#   Log::Log4perl
 
 package HTTP::Spy;
 use Pony::Object -singleton;
@@ -13,6 +15,7 @@ use Pony::Object -singleton;
   use HTTP::Spy::Admin;
   use HTTP::Spy::Request;
   use HTTP::Spy::UserAgent;
+  use HTTP::Spy::Packet;
   
   use Log::Log4perl;
 
@@ -20,6 +23,8 @@ use Pony::Object -singleton;
   protected _port => '3128';
   protected _conf => undef;
   protected _root => '';
+  protected _adm  => undef;
+  
   
   # Function: init
   #   Init object.
@@ -37,9 +42,25 @@ use Pony::Object -singleton;
         $this->{"_$k"} = $v;
       }
       
-      Log::Log4perl->init($this->getRoot() . "/conf/log.conf");
+      # Init admin object.
+      $this->_adm = new HTTP::Spy::Admin;
+      
+      my $rootPath = $this->getRoot();
+      
+      # Init logger.
+      my $logConf = qq{
+        log4perl.rootLogger              = DEBUG, LOG1
+        log4perl.appender.LOG1           = Log::Log4perl::Appender::File
+        log4perl.appender.LOG1.filename  = $rootPath/tmp/log.txt
+        log4perl.appender.LOG1.mode      = append
+        log4perl.appender.LOG1.layout    = Log::Log4perl::Layout::PatternLayout
+        log4perl.appender.LOG1.layout.ConversionPattern = \%d \%p \%m \%n
+      };
+      
+      Log::Log4perl->init( \$logConf );
       my $logger = Log::Log4perl->get_logger('HTTP::Spy');
       
+      say "HTTP::Spy started!";
       $logger->fatal("HTTP::Spy started!");
     }
   
@@ -78,46 +99,32 @@ use Pony::Object -singleton;
         content   => $env->content,
       };
       
-      my $req  = new HTTP::Spy::Request($params);
+      my $req = new HTTP::Spy::Request($params);
       
       #############################
       #
       #   ADMIN INTERFACE
       #
-      return $this->admin($req) if $env->headers->{'host'} eq '127.0.0.1';
+      return $this->_adm->show($req) if $env->headers->{'host'} eq 'http.spy';
       ##############################
       
       $this->log($req);
       
+      # Inspection & substitution (request).
+      # Can delays thread.
+      $req = $this->_adm->inspect($req);
+      
+      # Do request.
       my $ua   = new HTTP::Spy::UserAgent;
       my $resp = $ua->send($req);
       
-      return $resp->as_string();
-    }
-  
-  
-  # Function: admin
-  #   Goto admin interface.
-  # Parameters:
-  #   req - HTTP request
-  
-  sub admin : Public
-    {
-      my $this = shift;
-      my $req  = shift;
-      my $adm  = new HTTP::Spy::Admin;
-      #say $adm->show($req);
-      return $adm->show($req);
-    }
-  
-  # Function: output
-  #   Runs on each http request (as UserAgent).
-  
-  sub output : Public
-    {
-      my $this = shift;
+      # Inspection & substitution (response).
+      # Can delays thread.
+      $resp = $this->_adm->inspect($resp);
       
+      return $resp;
     }
+  
   
   # Function: getHost
   #   Host getter.
@@ -168,12 +175,16 @@ use Pony::Object -singleton;
         my $req = $message;
         my $message = sprintf "[%s] %s via %s (%s)",
                         scalar localtime, $req->host, $req->method, $req->uri;
+        
         $logger->info($message);
+        #say $message;
+        
         push @HTTP::Spy::Admin::LOG, $message;
       }
       else
       {
         $logger->info($message);
+        #say $message;
         push @HTTP::Spy::Admin::LOG, $message;
       }
     }

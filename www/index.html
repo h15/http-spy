@@ -1,60 +1,256 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>HTTP::Spy Admin panel</title>
-        <script type="text/javascript" src="/jquery.min.js"></script>
-        <meta charset="UTF-8">
-        <script>
-          $(document).ready(function(){
-            tick();
-            
-            $('.tabLabel').click(function(){
-              var id = $(this).attr('id');
-              // Switch current panel.
-              $('.tabPanel').hide();
-              $('#' + id + 'Panel').show();
-              // Switch current tabLable.
-              $('.tabLabel').removeClass('active');
-              $(this).addClass('active');
+  <head>
+    <title>HTTP::Spy Admin panel</title>
+    <script type="text/javascript" src="/jquery.min.js"></script>
+    <meta charset="UTF-8">
+    <script>
+      var packets = [];
+      
+      $(document).ready(function(){
+        tick();
+        
+        $('.tabLabel').click(function(){
+          var id = $(this).attr('id');
+          // Switch current panel.
+          $('.tabPanel').hide();
+          $('#' + id + 'Panel').show();
+          // Switch current tabLable.
+          $('.tabLabel').removeClass('active');
+          $(this).addClass('active');
+        });
+        
+        $('#inspectConfigSave').click(function(){
+          
+          $.getJSON("/inspect",
+            $("#inspectForm").serialize(), 
+            function(data){
+              if( data.error == 0 )
+              {
+                showDone();
+              }
             });
+        });
+        
+        $('#popup').click(function(){
+          $('.popup').hide();
+          $('.viewPacket').remove();
+        });
+      });
+      
+      function tick()
+      {
+        $.getJSON( "/log", {},
+          function(data)
+          {
+            // LOG
+            $.each(data.log, function(i, item){
+              $('#logPanel').prepend('<div class="item">' + item + '</div>');
+            });
+            
+            // Packets
+            $.each(data.packets, function(i, item){
+              var idx = packets.length;
+              packets.push(item);
+              
+              $('#packetPreviewArea').prepend(
+                '<a href="javascript: void(0)" class="viewPacketButton" idx="' + idx + '">'
+                  + '<div class="item">'
+                    + item.host
+                    + ' [' + item.method + ']'
+                    + '<div><small>'
+                      + item.uri
+                    + '</small></div>'
+                  + '</div>'
+                + '</a>');
+              
+              reinitViewPacketButton();
+            });
+          }
+        );
+        
+        setTimeout(tick, 1000);
+      }
+      
+      function showDone ()
+      {
+        $('#message-done').fadeIn(500).delay(2000).fadeOut(500);
+      }
+      
+      function showError ()
+      {
+        $('#message-error').fadeIn(500).delay(2000).fadeOut(500);
+      }
+      
+      function reinitViewPacketButton ()
+      {
+        $('.viewPacketButton').unbind('click');
+        $('.viewPacketButton').click(function(){
+          
+          var idx = $(this).attr('idx');
+          
+          $('#popup').empty();
+          $('#popup').show();
+          
+          var content = packets[idx].body;
+          var header = '<table class="packet-headers">';
+          
+          for ( var k in packets[idx].header )
+          {
+            header += '<tr><td>' + k + '</td><td><input name="' + k + "\" value='"
+                 + packets[idx].header[k] + "'></td></tr>"
+          }
+          
+          header += '</table>';
+          
+          $('body').prepend(
+          '<div id="viewPacketWrapper">'
+            + '<div id="viewPacket" class="viewPacket popup">'
+              + '<a id="viewPacketClose" href="javascript: void(0)">Close packet editor</a>'
+              + '<h1>Edit packet</h1>'
+              + packets[idx].method + ' ' + packets[idx].uri
+              + '<form id="packetForm">'
+                + '<h2>Headers</h2>'
+                  + header
+                + '<h2>Body</h2>'
+                  + '<div><textarea name="content">'
+                    + content
+                  + '</textarea></div>'
+                + '<input type="button" id="sendPacketButton" value="Send update" idx="' + idx + '">'
+                + '<input type="hidden" name="packetId" value="' + packets[idx].packetId + '">'
+              + '</form>'
+            + '</div>'
+          + '</div>');
+          
+          
+          $('#viewPacketClose').click(function(){
+            $('.popup').hide();
+            $('.viewPacket').remove();
           });
           
-          function tick()
-          {
-            $.getJSON( "/log", {},
-              function(data)
-              {
-                // LOG
-                $.each(data.log, function(i, item){
-                  $('#logPanel').prepend('<div class="item">' + item + '</div>');
-                });
-              }
-            );
+          
+          $('#sendPacketButton').click(function(){
+            var idx = $(this).attr('idx');
             
-            setTimeout(tick, 1000);
-          }
-        </script>
-        <style>
-          body, html { font-family: Helvetica, Arial, sans-serif; color: #222222; background: rgb(248, 248, 241); margin: 0px; padding: 0px; }
-          .menu { font-size: 16px; background: rgb(198, 198, 181); padding: 4px 8px; height: 24px; }
-          #logPanel { height: 800px; width: 100%; overflow: auto; }
-          #logPanel .item { font-family:  monospace; background: #eeeeee; font-size: 10px; }
-          .right { float: right; }
-          a { color: #2266cc; text-decoration: none; }
-          .tabPanel { display: none; }
-          .tabLabel { background: rgb(218, 218, 201); float: left; padding: 4px; margin: 0px 10px; height: 20px; }
-          .active { display: block; background: rgb(242, 242, 232); }
-        </style>
-    </head>
-    <body>
-        <div class="menu">
-          <div class="right">HTTP::Spy Admin panel</div>
-          <a href="javascript: void(0)" id="settings" class="tabLabel active">Settings</a>
-          <a href="javascript: void(0)" id="log" class="tabLabel">Log</a>
-        </div>
-        <div id="main">
-          <div id="settingsPanel" class="tabPanel active"></div>
-          <div id="logPanel" class="tabPanel"></div>
-        </div>
-    </body>
+            $.post( "/change", $("#packetForm").serialize() );
+            
+            $('.popup').hide();
+            $('.viewPacket').remove();
+            showDone();
+            
+            $('.viewPacketButton').each(function(i){
+              if ( $(this).attr('idx') == idx )
+                $(this).css({color: '#888'});
+            });
+          });
+        });
+      }
+    </script>
+    <style>
+      body, html { height: 100%; font-family: Helvetica, Arial, sans-serif; color: #222222; background: rgb(248, 248, 241); margin: 0px; padding: 0px; margin-top: 10px; }
+      .menu { font-size: 16px; background: rgb(198, 198, 181); padding: 4px 8px; height: 24px; position: fixed; top: 0px; right: 0px; left: 0px; }
+      #logPanel { width: 100%; overflow: auto; }
+      #logPanel .item { font-family: monospace; background: #eeeeee; font-size: 10px; }
+      .right { float: right; }
+      a { color: #2266cc; text-decoration: none; }
+      .tabPanel { display: none; }
+      .tabLabel { background: rgb(218, 218, 201); float: left; padding: 4px; margin: 0px 10px; height: 20px; }
+      .active { display: block; background: rgb(242, 242, 232); }
+      #inspectPanel { padding: 10px; margin-top: -1px; }
+      .cb { clear: both; }
+      .message { border-radius: 5px; padding: 10px; position: fixed; top: 20px; right: 20px; width: 200px; display: none; z-index: 2000; }
+      #message-done { background: #efe; border: 1px solid #cfc; }
+      #message-error { background: #fee; border: 1px solid #fcc; }
+      #popup { display: none; position: fixed; top: 0; left: 0; width: 100%; min-height: 100%; z-index: 100; background: #000; opacity: 0.5; }
+      #viewPacket { margin: 50px auto; width: 800px; background: rgb(242, 242, 232); opacity: 1; padding: 20px; }
+      #viewPacketWrapper { width: 100%; z-index: 1000; position: absolute; top: 0; } 
+      .wide { width: 100%; }
+      #viewPacketClose { float: right; display: block; }
+      .packet-headers td { padding-right: 20px; }
+      .packet-headers input { width: 300px; font-family: monospace; }
+      #packetForm textarea { width: 500px; }
+    </style>
+  </head>
+  <body>
+    <div id="popup" class="popup"></div>
+    <div id="message-done" class="message">Done</div>
+    <div id="message-error" class="message">Error</div>
+    
+    <div class="menu">
+      <div class="right">HTTP::Spy Admin panel</div>
+      <a href="javascript: void(0)" id="inspect" class="tabLabel active">Inspect</a>
+      <a href="javascript: void(0)" id="log" class="tabLabel">Log</a>
+    </div>
+    <div id="main">
+      
+      <!--
+        Inspect
+          -->
+      <div id="inspectPanel" class="tabPanel active">
+      
+      <!--
+        Set inspect rules
+          -->
+      <div style="width:500px; float:left;">
+        <h3>Inspect packets</h3>
+        <form id="inspectForm">
+          <table>
+            <tr valign="top">
+              <td style="width: 200px">
+            <label><input type="checkbox" name="method-GET" id="method-GET"> GET</label><br>
+            <label><input type="checkbox" name="method-POST" id="method-POST"> POST</label><br>
+            <label><input type="checkbox" name="method-PUT"  id="method-PUT"> PUT</label><br>
+            <label><input type="checkbox" name="method-HEAD" id="method-HEAD"> HEAD</label><br>
+            <label><input type="checkbox" name="method-DELETE" id="method-DELETE"> DELETE</label><br>
+              </td>
+              <td>
+            <div style="margin-bottom: 20px;">
+              Host <acronym title="Disabled if empty">?</acronym> :
+              <input type="text" name="host"><br>
+            </div>
+            <div style="margin-bottom: 20px;">
+              Except: <input type="text" name="extensions-except"><br>
+              <small>For example: <code>ico|png|jpg|gif</code></small>
+            </div>
+            <div>
+              <table>
+                <tr valign=top>
+                  <td>Direction:</td>
+                  <td>
+              <label><input type="checkbox" name="direction-toServer" id="direction-toServer"> To remote server</label><br>
+              <label><input type="checkbox" name="direction-fromServer" id="direction-fromServer"> From remote server</label>
+                  </td>
+                </tr>
+              </table>
+            </div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan=2>
+                <hr>
+                <input type="button" value="Start!" class="right" id="inspectConfigSave">
+              </td>
+            </tr>
+          </table>
+        </form>
+      </div>
+      
+      <!--
+        Packet inspect list
+          -->
+      <div id="packetPreviewArea" style="float: left; width: 500px; margin-top: 20px;"></div>
+      
+      <!--
+        End of panel.
+          -->
+      <div class="cb"></div>
+      
+      </div>
+      
+      <!--
+        Log
+          -->
+      <div id="logPanel" class="tabPanel"></div>
+    </div>
+  </body>
 </html>

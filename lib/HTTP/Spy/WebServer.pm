@@ -26,7 +26,8 @@ use Pony::Object;
       my $host = shift;
       my $port = shift;
       
-      $this->_driver = HTTP::Spy::WebServer::HTTPDaemon->new->init(LocalAddr => $host, LocalPort => $port)
+      $this->_driver = HTTP::Spy::WebServer::HTTPDaemon
+                        ->new->init(LocalAddr => $host, LocalPort => $port)
         or die "Cannot initialize proxy server: $!";
     }
   

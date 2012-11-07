@@ -70,14 +70,14 @@ use HTTP::Spy::WebServer;
       when ( /^(--help|\?|-h|\/\?|\/h)/ )
       {
         say $usage;
-        exit(0);
+        _exit(0);
       }
       
       default
       {
         say qq{Incorrect params! Error on "$param"\n};
         say $usage;
-        exit(1);
+        _exit(1);
       }
     }
   }
@@ -88,13 +88,10 @@ use HTTP::Spy::WebServer;
   
   eval
   {
-    while (1)
-    {
-      # RUNNING WebServer...
-      HTTP::Spy::WebServer
-        ->new( $spy->getHost(), $spy->getPort() )
-          ->loop( sub{ $spy->input(@_) } );
-    }
+    # RUNNING WebServer...
+    HTTP::Spy::WebServer
+      ->new( $spy->getHost(), $spy->getPort() )
+        ->loop( sub{ $spy->input(@_) } );
   };
   
   # Good looking error print.
@@ -105,7 +102,7 @@ use HTTP::Spy::WebServer;
     print color 'reset';
     print " $@\n";
     
-    exit(1); # Some error happend.
+    _exit(1); # Some error happend.
   }
   else
   {
@@ -114,7 +111,14 @@ use HTTP::Spy::WebServer;
     print color 'reset';
     print " Server stopped.\n";
     
-    exit(0); # Some error did not happend.
+    _exit(0); # Some error did not happend.
+  }
+
+sub _exit
+  {
+    my $code = shift;
+    sleep(5);
+    exit($code);
   }
 
 __END__
