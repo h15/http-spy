@@ -137,7 +137,7 @@ use Pony::Object;
         }
       }
       
-      return [join("\r\n", @{ $this->headers }) . "\r\n\r\n", $content];
+      return [join("\r\n", @{ $this->headers }), $content];
     }
   
   
