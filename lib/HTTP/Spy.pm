@@ -16,8 +16,9 @@ use Pony::Object -singleton;
   use HTTP::Spy::Request;
   use HTTP::Spy::UserAgent;
   use HTTP::Spy::Packet;
-  
   use Log::Log4perl;
+
+  our $VERSION = 0.1;
 
   protected _host => '127.0.0.1'; # Default conf, host and port.
   protected _port => '3128';
