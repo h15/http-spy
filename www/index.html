@@ -56,8 +56,11 @@
               $('#packetPreviewArea').prepend(
                 '<a href="javascript: void(0)" class="viewPacketButton" idx="' + idx + '">'
                   + '<div class="item">'
-                    + item.host
-                    + ' [' + item.method + ']'
+                    + '<b>'
+                      + (item.type == 'request' ? '&rArr;' : '&lArr;')
+                      + item.host
+                      + ' [' + item.method + ']'
+                    + '</b>'
                     + '<div><small>'
                       + item.uri
                     + '</small></div>'
@@ -113,8 +116,7 @@
                 + '<h2>Headers</h2>'
                   + header
                 + '<h2>Body</h2>'
-                  + '<div><textarea name="content">'
-                    + content
+                  + '<div><textarea name="content" id="content-' + packets[idx].packetId + '">'
                   + '</textarea></div>'
                 + '<input type="button" id="sendPacketButton" value="Send update" idx="' + idx + '">'
                 + '<input type="hidden" name="packetId" value="' + packets[idx].packetId + '">'
@@ -122,6 +124,7 @@
             + '</div>'
           + '</div>');
           
+          $('#content-' + packets[idx].packetId).val(content);
           
           $('#viewPacketClose').click(function(){
             $('.popup').hide();
@@ -168,7 +171,7 @@
       #viewPacketClose { float: right; display: block; }
       .packet-headers td { padding-right: 20px; }
       .packet-headers input { width: 300px; font-family: monospace; }
-      #packetForm textarea { width: 500px; }
+      #packetForm textarea { width: 780px; height: 100px; }
     </style>
   </head>
   <body>
@@ -210,7 +213,7 @@
             </div>
             <div style="margin-bottom: 20px;">
               Except: <input type="text" name="extensions-except"><br>
-              <small>For example: <code>ico|png|jpg|gif</code></small>
+              <small>For example: <code>ico|png|jpg|gif|js|css</code></small>
             </div>
             <div>
               <table>

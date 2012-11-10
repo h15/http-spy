@@ -1,4 +1,4 @@
-Name
+NAME
     HTTP::Spy - Spy the web!
 
 OVERVIEW
@@ -38,6 +38,12 @@ COMMANDS
         --help - to see this message.
       For example:
         ./bin/start.pl --conf=/home/user/spy-conf.yaml --host=8.8.8.8 --port=8081
+
+BROWSERS
+    How to use it with browsers.
+
+    Chrome / Chromium
+          chromium-browser --proxy-server=localhost:3128
 
 COPYRIGHT AND LICENSE
     Copyright (C) 2012, Georgy Bazhukov.

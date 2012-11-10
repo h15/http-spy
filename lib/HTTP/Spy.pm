@@ -24,6 +24,8 @@ use Pony::Object -singleton;
   # | Can be empty, 'tk' or 'web'.
   use constant GUI => 'tk';
 
+  our $VERSION = 0.1;
+
   protected _host => '127.0.0.1'; # Default conf, host and port.
   protected _port => '3128';
   protected _conf => undef;

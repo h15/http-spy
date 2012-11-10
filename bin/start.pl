@@ -30,7 +30,10 @@ use lib APP_PATH . '/lib';
 
 use HTTP::Spy;
 use HTTP::Spy::WebServer;
-
+  
+  # Turn off STDERR.
+  close STDERR;
+  
   # Default params.
   # Will use if user does not redefine them.
   my $params =
